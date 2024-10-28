@@ -1,0 +1,66 @@
+<html lang="en">
+<head>
+  <title>Leaflet Map with Random Coordinates</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+  <style>
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+    #coordinates {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Map with Random Markers and Localities</h1>
+  <div id="map"></div>
+  <div id="coordinates"></div>
+
+  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+  <script>
+    // Initialize the map centered on the US
+    const map = L.map('map').setView([37.0902, -95.7129], 4);
+
+    // Add tile layer to the map
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+    }).addTo(map);
+
+    // Function to generate random coordinates within a range
+    function getRandomInRange(from, to, fixed) {
+      return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+    }
+
+    // Generate random coordinates for 3 markers
+    const coordinates = [
+      { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+      { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+      { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+    ];
+
+    // Loop through each coordinate, add a marker, and fetch the locality
+    coordinates.forEach((coord, index) => {
+      // Create marker and add it to the map
+      const marker = L.marker([coord.lat, coord.lng]).addTo(map);
+
+      // Fetch locality using BigDataCloud API
+      fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coord.lat}&longitude=${coord.lng}&localityLanguage=en`)
+        .then(response => response.json())
+        .then(data => {
+          const locality = data.locality || "Locality not found";
+
+          // Add information below the map
+          const infoDiv = document.getElementById("coordinates");
+          infoDiv.innerHTML += `<p>Marker ${index + 1} (Latitude: ${coord.lat}, Longitude: ${coord.lng}) - Locality: ${locality}</p>`;
+
+          // Bind a popup with locality information to the marker
+          marker.bindPopup(`Marker ${index + 1}: ${locality}`).openPopup();
+        })
+        .catch(error => console.error("Error fetching locality:", error));
+    });
+  </script>
+
+</body>
+</html>
